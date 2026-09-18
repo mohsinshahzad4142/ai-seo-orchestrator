@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 // --- INLINE PHASE 1 INTELLIGENCE SECTION ---
 function Phase1IntelligenceSection() {
   const [seedInput, setSeedInput] = useState('nextjs seo agency, fastapi developer usa');
-  const [targetDomain, setTargetDomain] = useState('mohsinshahzad.vercel.app');
-  const [competitorDomain, setCompetitorDomain] = useState('competitor-seo.com');
+  const [targetDomain, setTargetDomain] = useState('https://mohsinshahzad.vercel.app');
+  const [competitorDomain, setCompetitorDomain] = useState('https://competitor-seo.com');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,13 +20,15 @@ function Phase1IntelligenceSection() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      setResult({ endpoint, data });
+      setResult({ endpoint, status: res.status, data });
     } catch (err) {
       setResult({ endpoint, error: String(err) });
     } finally {
       setLoading(false);
     }
   };
+
+  const parsedSeeds = seedInput.split(',').map((s) => s.trim()).filter(Boolean);
 
   return (
     <section style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', boxSizing: 'border-box', width: '100%' }}>
@@ -50,7 +52,7 @@ function Phase1IntelligenceSection() {
           <button
             onClick={() =>
               runPhase1Action('/api/v1/intelligence/keywords', {
-                seeds: seedInput.split(',').map((s) => s.trim()).filter(Boolean),
+                seed_keywords: parsedSeeds,
               })
             }
             disabled={loading}
@@ -68,22 +70,23 @@ function Phase1IntelligenceSection() {
               type="text"
               value={targetDomain}
               onChange={(e) => setTargetDomain(e.target.value)}
-              placeholder="Your domain"
+              placeholder="Your URL"
               style={{ width: '100%', padding: '6px', marginBottom: '8px', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11px', borderRadius: '4px', boxSizing: 'border-box' }}
             />
             <input
               type="text"
               value={competitorDomain}
               onChange={(e) => setCompetitorDomain(e.target.value)}
-              placeholder="Competitor domain"
+              placeholder="Competitor URL"
               style={{ width: '100%', padding: '6px', marginBottom: '12px', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11px', borderRadius: '4px', boxSizing: 'border-box' }}
             />
           </div>
           <button
             onClick={() =>
               runPhase1Action('/api/v1/intelligence/competitor-gaps', {
-                target_domain: targetDomain,
-                competitor_domain: competitorDomain,
+                target_url: targetDomain,
+                competitor_url: competitorDomain,
+                reference_target_keywords: parsedSeeds,
               })
             }
             disabled={loading}
@@ -94,31 +97,34 @@ function Phase1IntelligenceSection() {
         </div>
 
         {/* Card 3: GSC Historical Diff */}
-        <div style={{ background: '#0f172a', padding: '16px', borderRadius: '8px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#fff' }}>3. GSC Historical Diff</h3>
-            <p style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
-              Calculates Ranked & Deranked terms delta over 30d baseline.
-            </p>
-          </div>
-          <button
-            onClick={() =>
-              runPhase1Action('/api/v1/intelligence/gsc-diff', {
-                lookback_days: 30,
-                position_threshold: 3,
-              })
-            }
-            disabled={loading}
-            style={{ width: '100%', padding: '8px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            Compute Diff
+<div style={{ background: '#0f172a', padding: '16px', borderRadius: '8px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+  <div>
+    <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#fff' }}>3. GSC Historical Diff</h3>
+    <p style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '12px' }}>
+      Calculates Ranked & Deranked terms delta over 30d baseline.
+    </p>
+  </div>
+  <button
+    onClick={() =>
+      runPhase1Action('/api/v1/intelligence/gsc-diff', {
+        baseline_data: parsedSeeds.map((k, idx) => ({ keyword: k, position: 2.1 + idx })),
+        current_data: parsedSeeds.map((k, idx) => ({ keyword: k, position: 1.5 + idx })),
+        lookback_days: 30,
+        position_threshold: 3,
+      })
+    }
+    disabled={loading}
+    style={{ width: '100%', padding: '8px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+  >
+    Compute Diff
           </button>
         </div>
       </div>
-
       {result && (
         <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', padding: '12px', fontFamily: 'monospace', fontSize: '11px' }}>
-          <div style={{ color: '#38bdf8', marginBottom: '6px', fontWeight: 'bold' }}>Response from {result.endpoint}:</div>
+          <div style={{ color: '#38bdf8', marginBottom: '6px', fontWeight: 'bold' }}>
+            Response from {result.endpoint} (Status: {result.status}):
+          </div>
           <pre style={{ margin: 0, color: '#cbd5e1', maxHeight: '200px', overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
             {JSON.stringify(result.data || result.error, null, 2)}
           </pre>

@@ -167,7 +167,7 @@ class ApprovalRequest(BaseModel):
     action: str
     target_url: str
     status: str = "APPROVED"  # APPROVED or REJECTED
-    proposed_content: dict = None
+    proposed_content: dict | None = None
 
 
 # --- AGENT 4: AI CONTENT GENERATOR ---
@@ -439,3 +439,8 @@ def generate_client_report(target_url: str = "mohsinshahzad.vercel.app"):
             filename="SEO_Executive_Audit_Report.html", 
             media_type="text/html"
         )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
